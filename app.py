@@ -6,6 +6,8 @@
 
 import streamlit as st
 import pandas as pd
+import io
+from PIL import Image, ImageOps
 from modules.calculator import calculate_dilution, format_result_text
 from modules.ocr import extract_numbers_from_image, is_cloud_vision_configured
 from modules.usage_tracker import get_monthly_count, get_remaining, is_within_limit, increment_count, MONTHLY_LIMIT
@@ -178,8 +180,25 @@ st.markdown("""
 
 
 # ═══════════════════════════════════════════════════════
-#  로그인 인증
+#  로그인 인증 및 헬퍼 함수
 # ═══════════════════════════════════════════════════════
+def fix_image_orientation(image_bytes: bytes) -> bytes:
+    """모바일 기기 등에서 촬영한 EXIF 방향(회전) 정보를 실제 이미지 픽셀에 적용하여 바이트로 반환합니다."""
+    try:
+        img = Image.open(io.BytesIO(image_bytes))
+        img = ImageOps.exif_transpose(img)
+        
+        # RGBA 패널티 방지 및 JPEG 포맷으로 통일
+        if img.mode not in ("RGB", "L"):
+            img = img.convert("RGB")
+            
+        buf = io.BytesIO()
+        img.save(buf, format="JPEG")
+        return buf.getvalue()
+    except Exception as e:
+        print(f"이미지 회전 보정 오류: {e}")
+        return image_bytes
+
 def check_login():
     """secrets.toml의 [auth] 섹션에서 사용자 인증을 확인합니다."""
     # 인증 설정이 없으면 로그인 없이 통과
@@ -338,12 +357,18 @@ if input_mode == "📸 이미지 OCR":
     if uploaded_files:
         st.caption(f"📎 **{len(uploaded_files)}장** 업로드됨")
 
+        # 모바일 EXIF 회전 보정 적용
+        fixed_images = []
+        for f in uploaded_files:
+            fixed_bytes = fix_image_orientation(f.getvalue())
+            fixed_images.append(fixed_bytes)
+
         # 이미지 프리뷰 + 순서 지정
         file_order = []
         cols = st.columns(min(len(uploaded_files), 3))
-        for idx, f in enumerate(uploaded_files):
+        for idx, (f, fixed_bytes) in enumerate(zip(uploaded_files, fixed_images)):
             with cols[idx % 3]:
-                st.image(f, caption=f.name, width=150)
+                st.image(fixed_bytes, caption=f.name, width=150)
                 order = st.number_input(
                     f"순서",
                     min_value=1,
@@ -351,7 +376,7 @@ if input_mode == "📸 이미지 OCR":
                     value=idx + 1,
                     key=f"order_{idx}",
                 )
-                file_order.append((order, idx, f))
+                file_order.append((order, idx, f.name, fixed_bytes))
 
         # 순서대로 정렬
         file_order.sort(key=lambda x: x[0])
@@ -370,17 +395,16 @@ if input_mode == "📸 이미지 OCR":
             all_numbers = []
             progress = st.progress(0, text="OCR 처리 중...")
 
-            for i, (order, orig_idx, f) in enumerate(file_order):
+            for i, (order, orig_idx, fname, fixed_bytes) in enumerate(file_order):
                 progress.progress(
                     (i + 1) / len(file_order),
-                    text=f"({i+1}/{len(file_order)}) {f.name} 처리 중...",
+                    text=f"({i+1}/{len(file_order)}) {fname} 처리 중...",
                 )
-                image_bytes = f.getvalue()
                 if engine_key == "cloud_vision":
                     increment_count()
-                numbers = extract_numbers_from_image(image_bytes, engine=engine_key)
+                numbers = extract_numbers_from_image(fixed_bytes, engine=engine_key)
                 if numbers:
-                    st.caption(f"📄 **{f.name}**: {len(numbers)}개 숫자 인식")
+                    st.caption(f"📄 **{fname}**: {len(numbers)}개 숫자 인식")
                     all_numbers.extend(numbers)
 
             progress.empty()
