@@ -127,12 +127,18 @@ st.markdown("""
         /* 라디오 버튼 세로 배치 (계단식 수정) */
         .stRadio > div[role="radiogroup"] {
             flex-direction: column !important;
-            align-items: stretch !important; /* 계단식(너비 불일치) 해결! */
+            align-items: stretch !important;
+            display: flex !important;
             gap: 10px !important;
+            width: 100% !important;
         }
         .stRadio > div[role="radiogroup"] > label {
-            width: 100% !important; /* 세로형 꽉 차게 */
+            width: 100% !important;
+            margin: 0 !important;
             padding: 14px !important;
+            display: flex !important;
+            justify-content: center !important;
+            box-sizing: border-box !important;
         }
 
         /* 메트릭 카드 축소 */
