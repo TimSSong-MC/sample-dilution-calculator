@@ -35,27 +35,73 @@ st.markdown("""
         margin-bottom: 2rem;
     }
 
-    /* ─── 모바일 최적화 ─── */
+    /* ─── 모바일 최적화 (필수) ─── */
     /* 입력 필드 확대 방지 (iOS Safari) */
     input, select, textarea {
         font-size: 16px !important;
     }
-
-    /* 버튼 터치 영역 확대 */
-    .stButton > button {
-        min-height: 48px;
-        font-size: 1rem;
+    
+    /* 데이터 테이블/에디터 가로 스크롤 */
+    .stDataFrame, .stDataEditor {
+        overflow-x: auto !important;
+        -webkit-overflow-scrolling: touch !important;
     }
 
-    /* 데이터 테이블 가로 스크롤 */
-    .stDataFrame, .stDataEditor {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
+    /* ─── 공통 컴포넌트 디자인 (Soft Tint) ─── */
+    /* 버튼 스타일 통일 */
+    .stButton > button {
+        border-radius: 12px !important;
+        font-weight: 600 !important;
+        transition: all 0.2s ease-in-out !important;
+    }
+    /* Primary 버튼 (계산하기 등) */
+    .stButton > button[kind="primary"] {
+        background: linear-gradient(135deg, #339af0, #20c997) !important;
+        border: none !important;
+        box-shadow: 0 4px 12px rgba(32, 201, 151, 0.2) !important;
+    }
+    .stButton > button[kind="primary"]:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 16px rgba(32, 201, 151, 0.3) !important;
+    }
+
+    /* 설정 영역 (회색 박스) 배경 부여 */
+    [data-testid="stHorizontalBlock"] {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 16px;
+        border: 1px solid #f1f3f5;
+    }
+
+    /* 라디오 버튼 (프리셋/입력방식 등) 카드형 디자인 (공통) */
+    .stRadio > div[role="radiogroup"] {
+        gap: 12px !important;
+    }
+    .stRadio > div[role="radiogroup"] > label {
+        padding: 12px 20px !important;
+        background-color: #ffffff;
+        border: 1px solid #e9ecef !important;
+        border-radius: 12px !important;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.02) !important;
+        transition: all 0.2s ease !important;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin: 0 !important;
+    }
+    .stRadio > div[role="radiogroup"] > label:hover {
+        background-color: #e7f5ff !important;
+        border-color: #74c0fc !important;
     }
 
     /* 메트릭 카드 간격 */
     [data-testid="stMetricValue"] {
-        font-size: 1.5rem;
+        font-size: 1.8rem;
+        color: #343a40;
+    }
+    [data-testid="stMetricLabel"] {
+        font-weight: 600;
+        color: #868e96;
     }
 
     /* 모바일 반응형 */
@@ -70,7 +116,7 @@ st.markdown("""
 
         /* Streamlit 기본 패딩 축소 */
         .block-container {
-            padding: 1rem 0.8rem !important;
+            padding: 1.5rem 1rem !important;
         }
 
         /* 사이드바 기본 숨김 */
@@ -78,16 +124,15 @@ st.markdown("""
             min-width: 0px;
         }
 
-        /* 라디오 버튼 세로 배치 */
-        .stRadio > div {
+        /* 라디오 버튼 세로 배치 (계단식 수정) */
+        .stRadio > div[role="radiogroup"] {
             flex-direction: column !important;
-            gap: 8px;
+            align-items: stretch !important; /* 계단식(너비 불일치) 해결! */
+            gap: 10px !important;
         }
-        .stRadio > div > label {
-            padding: 10px 16px !important;
-            border: 1px solid #dee2e6;
-            border-radius: 8px;
-            text-align: center;
+        .stRadio > div[role="radiogroup"] > label {
+            width: 100% !important; /* 세로형 꽉 차게 */
+            padding: 14px !important;
         }
 
         /* 메트릭 카드 축소 */
